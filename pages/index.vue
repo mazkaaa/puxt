@@ -7,7 +7,7 @@ type fetchResultType = {
   url: string;
 };
 
-const currentData = ref(30);
+const currentData = ref(24);
 const { data, pending } = await useFetch(
   "https://pokeapi.co/api/v2/pokemon", {
     query: {
@@ -23,13 +23,13 @@ const { data, pending } = await useFetch(
 <template>
   <div class="my-8 mx-6 space-y-8">
     <h1 class="text-4xl font-semibold text-center">Pokemons</h1>
-    <div class="grid grid-cols-12 gap-3">
+    <div class="grid grid-cols-12 gap-3 grid-flow-dense">
       <div v-for="poke in ((data as any).results as fetchResultType[])" class="col-span-1">
-        <PokeCard :name="poke.name" />
+        <PokeCard :poke-url="poke.url" />
       </div>
     </div>
     <div class="flex justify-center items-center">
-      <button @click="currentData += 30" :disabled="pending" class="btn btn-primary">
+      <button @click="currentData += 24" :disabled="pending" class="btn btn-primary">
         {{ pending ? "Loading" : "Load more" }}
         <span v-if="pending" class="loading loading-ring"></span>
       </button>
