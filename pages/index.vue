@@ -8,8 +8,9 @@ type fetchResultType = {
 };
 
 const currentData = ref(24);
-const { data, pending } = await useFetch(
-  "https://pokeapi.co/api/v2/pokemon", {
+const { data, pending, status } = await useFetch(
+  "https://pokeapi.co/api/v2/pokemon",
+  {
     query: {
       limit: currentData,
       offset: 0,
@@ -21,15 +22,24 @@ const { data, pending } = await useFetch(
 </script>
 
 <template>
-  <div class="my-8 mx-6 space-y-8">
+  <div class="space-y-8">
     <h1 class="text-4xl font-semibold text-center">Pokemons</h1>
-    <div class="grid grid-cols-12 gap-3 grid-flow-dense">
-      <div v-for="poke in ((data as any).results as fetchResultType[])" class="col-span-1">
-        <PokeCard :poke-url="poke.url" />
+    <div class="flex flex-row flex-wrap gap-3 justify-center">
+      <div
+        v-if="status === 'success'"
+        v-for="poke in ((data as any).results as fetchResultType[])"
+      >
+        <NuxtLink :to="`/pokemon/${poke.name}`">
+          <PokeCard :poke-url="poke.url" />
+        </NuxtLink>
       </div>
     </div>
     <div class="flex justify-center items-center">
-      <button @click="currentData += 24" :disabled="pending" class="btn btn-primary">
+      <button
+        @click="currentData += 24"
+        :disabled="pending"
+        class="btn btn-primary"
+      >
         {{ pending ? "Loading" : "Load more" }}
         <span v-if="pending" class="loading loading-ring"></span>
       </button>
