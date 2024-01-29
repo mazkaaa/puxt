@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import type { PokemonInterface } from "~/components/interfaces/pokemon";
 import PokeCard from "~/components/reusables/PokeCard.vue";
 
 type fetchResultType = {
@@ -8,15 +9,32 @@ type fetchResultType = {
 };
 
 const currentData = ref(24);
-const { data, pending, status } = await useFetch(
-  "https://pokeapi.co/api/v2/pokemon",
+const api_url = "https://pokeapi.co/api/v2/pokemon";
+
+const {
+  data: pokemons,
+  pending,
+} = await useLazyAsyncData(
+  "pokemons",
+  async () => {
+    const pokeIndex = await $fetch(api_url, {
+      query: {
+        limit: currentData.value,
+        offset: 0,
+      },
+    });
+    const pokeIndexData = (pokeIndex as any).results as fetchResultType[];
+    const pokeData = await Promise.all(
+      pokeIndexData.map(async (poke) => {
+        const result = await $fetch(poke.url);
+        return result;
+      })
+    );
+    return pokeData;
+  },
   {
-    query: {
-      limit: currentData,
-      offset: 0,
-    },
-    lazy: true,
     watch: [currentData],
+    server: true,
   }
 );
 </script>
@@ -25,19 +43,24 @@ const { data, pending, status } = await useFetch(
   <div class="space-y-8">
     <h1 class="text-4xl font-semibold text-center">Pokemons</h1>
     <div class="flex flex-row flex-wrap gap-3 justify-center">
-      <div
-        v-if="status === 'success'"
-        v-for="poke in ((data as any).results as fetchResultType[])"
-      >
+      <div v-if="!pending" v-for="poke in (pokemons as PokemonInterface[])">
         <NuxtLink :to="`/pokemon/${poke.name}`">
-          <PokeCard :poke-url="poke.url" />
+          <PokeCard
+            :image_url="poke.sprites.front_default"
+            :name="poke.name"
+            :id="poke.id"
+          />
         </NuxtLink>
+      </div>
+
+      <div v-else v-for="index in currentData">
+        <PokeCard :key="index" :skeleton="true" />
       </div>
     </div>
     <div class="flex justify-center items-center">
       <button
-        @click="currentData += 24"
         :disabled="pending"
+        @click="currentData += 24"
         class="btn btn-primary"
       >
         {{ pending ? "Loading" : "Load more" }}
